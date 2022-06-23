@@ -1,4 +1,3 @@
-
 import { initializeApp } from 'firebase/app';
 import {
   getAuth,
@@ -38,7 +37,6 @@ googleProvider.setCustomParameters({
   prompt: 'select_account',
 });
 
-
 export const auth = getAuth();
 export const signInWithGooglePopup = () =>
   signInWithPopup(auth, googleProvider);
@@ -65,17 +63,11 @@ export const getCategoriesAndDocuments = async () => {
   const collectionRef = collection(db, 'categories');
   const q = query(collectionRef);
 
-  const querySnapshot = await getDocs(q);
-  const categoryMap = querySnapshot.docs.reduce((acc, docSnapshot) => {
-  const { title, items } = docSnapshot.data();
-  acc[title.toLowerCase()] = items;
-  return acc;
-  }, {});
 
-  return categoryMap;
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map((docSnapshot) => docSnapshot.data());
 
 }
-
 
 export const createUserDocumentFromAuth = async (userAuth, additionalnformation = {}) => {
    if(!userAuth) return;
@@ -99,16 +91,14 @@ export const createUserDocumentFromAuth = async (userAuth, additionalnformation 
     }
   }
 
-  return userDocRef;
+  return userSnapshot;
 };
-
 
 
 export const createAuthUserWithEmailAndPassword = async (email, password) => {
    if(!email || !password) return;
    return await createUserWithEmailAndPassword(auth, email, password)
 }
-
 
 export const signInAuthWithEmailAndPassword = async (email, password) => {
   if(!email || !password) return;
@@ -118,3 +108,17 @@ export const signInAuthWithEmailAndPassword = async (email, password) => {
 export const signOutUser = async () => await signOut(auth);
 
 export const onAuthStateChangedListener = (callback) => onAuthStateChanged(auth, callback);
+
+export const getCurrentUser = () => {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(
+      auth,
+      (userAuth) => {
+        unsubscribe();
+        resolve(userAuth);
+      },
+      reject
+    );
+  });
+};
+ 
